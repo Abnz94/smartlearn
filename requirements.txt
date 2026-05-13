@@ -1,0 +1,6 @@
+flask
+flask-limiter
+python-dotenv
+gunicorn
+certifi
+Pillow

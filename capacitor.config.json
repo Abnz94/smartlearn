@@ -1,0 +1,15 @@
+{
+  "appId": "com.smartlearn.app",
+  "appName": "SmartLearn",
+  "webDir": "www",
+  "server": {
+    "url": "http://192.168.178.97:8000",
+    "cleartext": true
+  },
+  "ios": {
+    "contentInset": "always"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

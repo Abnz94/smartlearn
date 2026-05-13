@@ -1,0 +1,46 @@
+# Secrets — NE JAMAIS mettre sur GitHub
+.env
+.env.local
+.env.production
+
+# Base de données locale
+*.db
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Node / Capacitor
+node_modules/
+.npm/
+
+# Android — fichiers générés
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.aab
+
+# iOS — fichiers générés
+ios/App/Pods/
+ios/App/App.xcworkspace/
+ios/.xcode.env.local
+
+# macOS
+.DS_Store
+
+# ngrok
+ngrok
+ngrok 2
+
+# Fichiers inutiles
+generate_pptx.js
+users.json
+migrate.py

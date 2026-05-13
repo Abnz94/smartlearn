@@ -1,0 +1,2208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SmartLearn</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c28;
+  --border: #2a2a3d;
+  --accent: #6c63ff;
+  --accent2: #ff6584;
+  --accent3: #43e97b;
+  --accent4: #f7971e;
+  --text: #f0f0ff;
+  --muted: #8888aa;
+  --radius: 16px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+button, input, select, textarea { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+h1,h2,h3,.logo { font-family: 'Syne', sans-serif; }
+
+/* BG EFFECT */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at 20% 20%, rgba(108,99,255,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 80%, rgba(255,101,132,0.06) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+
+/* =================== AUTH =================== */
+#authScreen {
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 20px 40px;
+}
+.auth-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+}
+.logo-big {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.logo-sub {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 36px;
+}
+.auth-tabs {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 28px;
+}
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 9px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+.auth-tab.active {
+  background: var(--accent);
+  color: white;
+  font-weight: 500;
+}
+.input-group { margin-bottom: 16px; }
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.input-group input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-group input:focus { border-color: var(--accent); }
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: white;
+  margin-top: 8px;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  margin-top: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+.auth-error {
+  color: var(--accent2);
+  font-size: 0.85rem;
+  margin-top: 12px;
+  text-align: center;
+  display: none;
+}
+
+/* =================== MAIN =================== */
+#mainScreen { background: var(--bg); }
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo-small {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.topbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.stat-pill span:first-child { font-size: 1rem; }
+.avatar-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  color: white;
+  font-size: 0.95rem;
+}
+
+.main-content {
+  padding: 32px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* UPLOAD ZONE */
+.upload-section { margin-bottom: 40px; }
+.upload-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.upload-title span {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.upload-sub { color: var(--muted); margin-bottom: 20px; }
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 20px;
+  padding: 48px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+}
+.upload-zone:hover { border-color: var(--accent); background: rgba(108,99,255,0.05); }
+.upload-zone.has-file { border-color: var(--accent3); border-style: solid; }
+.upload-icon { font-size: 3rem; margin-bottom: 12px; }
+.upload-text { color: var(--muted); font-size: 0.95rem; }
+.upload-text strong { color: var(--text); }
+.upload-preview {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--accent3);
+  font-weight: 500;
+}
+#fileInput { display: none; }
+
+/* GAME MODES */
+.modes-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+}
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.mode-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 24px 20px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.mode-card:hover::before { opacity: 1; }
+.mode-card:hover { transform: translateY(-4px); }
+.mode-card.selected { border-width: 2px; }
+
+.mode-card[data-mode="qcm"] { --mc: #6c63ff; }
+.mode-card[data-mode="vf"] { --mc: #ff6584; }
+.mode-card[data-mode="trou"] { --mc: #43e97b; }
+.mode-card[data-mode="ordre"] { --mc: #f7971e; }
+.mode-card[data-mode="flashcard"] { --mc: #38bdf8; }
+
+.mode-card::before { background: radial-gradient(circle at center, color-mix(in srgb, var(--mc) 15%, transparent), transparent 70%); }
+.mode-card.selected { border-color: var(--mc); box-shadow: 0 0 0 1px var(--mc), 0 8px 32px color-mix(in srgb, var(--mc) 20%, transparent); }
+.mode-card:hover { border-color: var(--mc); }
+
+.mode-icon { font-size: 2rem; margin-bottom: 12px; }
+.mode-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+.mode-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+.pro-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, var(--accent4), #ff6b35);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-family: 'Syne', sans-serif;
+}
+
+.generate-btn {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+.generate-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #8b5cf6, var(--accent2));
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.generate-btn:hover::before { opacity: 1; }
+.generate-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(108,99,255,0.4); }
+.generate-btn span { position: relative; z-index: 1; }
+.generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* LOADING */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,15,0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 1000;
+}
+.loading-overlay.active { display: flex; }
+.loader {
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+/* =================== GAME =================== */
+#gameScreen { padding: 24px; max-width: 760px; margin: 0 auto; width: 100%; }
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.game-back {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+.game-back:hover { border-color: var(--accent); color: var(--text); }
+.game-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.lives { display: flex; gap: 4px; font-size: 1.2rem; }
+.score-display {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--accent3);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 99px;
+  margin-bottom: 36px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.question-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 36px;
+  margin-bottom: 24px;
+}
+.question-num {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+.question-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.answers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.answer-btn {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  text-align: left;
+  transition: all 0.2s;
+  line-height: 1.4;
+}
+.answer-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+.answer-btn.correct { border-color: var(--accent3) !important; background: rgba(67,233,123,0.12) !important; color: var(--accent3); }
+.answer-btn.wrong { border-color: var(--accent2) !important; background: rgba(255,101,132,0.12) !important; color: var(--accent2); }
+.answer-btn:disabled { cursor: not-allowed; }
+
+/* VF buttons */
+.vf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.vf-btn {
+  padding: 32px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  transition: all 0.2s;
+  text-align: center;
+}
+.vf-btn.vrai { background: rgba(67,233,123,0.08); color: var(--accent3); }
+.vf-btn.faux { background: rgba(255,101,132,0.08); color: var(--accent2); }
+.vf-btn:hover:not(:disabled) { transform: scale(1.03); }
+.vf-btn.correct { border-color: var(--accent3); background: rgba(67,233,123,0.2); }
+.vf-btn.wrong { border-color: var(--accent2); background: rgba(255,101,132,0.2); }
+
+/* TROU */
+.trou-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.1rem;
+  outline: none;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+.trou-input:focus { border-color: var(--accent); }
+.trou-submit {
+  width: 100%;
+  padding: 16px;
+  background: var(--accent);
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.trou-submit:hover { background: #5a52d5; }
+
+/* ORDRE */
+.ordre-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  min-height: 60px;
+  background: var(--surface2);
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+.word-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  transition: all 0.2s;
+}
+.word-chip:hover { border-color: var(--accent); color: var(--accent); }
+.word-chip.selected { background: var(--accent); color: white; border-color: var(--accent); }
+.ordre-validate {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent3), #22c55e);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* FLASHCARD */
+.flashcard {
+  perspective: 1000px;
+  margin-bottom: 24px;
+  cursor: pointer;
+}
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+}
+.flashcard-back { transform: rotateY(180deg); border-color: var(--accent); }
+.flashcard-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.flashcard-content {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.flashcard-hint { font-size: 0.85rem; color: var(--muted); }
+.flashcard-actions { display: flex; gap: 12px; }
+.fc-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fc-btn.review { background: rgba(255,101,132,0.15); color: var(--accent2); border: 1px solid rgba(255,101,132,0.3); }
+.fc-btn.hard { background: rgba(247,151,30,0.15); color: var(--accent4); border: 1px solid rgba(247,151,30,0.3); }
+.fc-btn.know { background: rgba(67,233,123,0.15); color: var(--accent3); border: 1px solid rgba(67,233,123,0.3); }
+
+/* FEEDBACK */
+.feedback-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: none;
+}
+.feedback-bar.show { display: block; }
+.feedback-bar.correct-fb { border-color: var(--accent3); background: rgba(67,233,123,0.08); }
+.feedback-bar.wrong-fb { border-color: var(--accent2); background: rgba(255,101,132,0.08); }
+.feedback-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.feedback-bar.correct-fb .feedback-title { color: var(--accent3); }
+.feedback-bar.wrong-fb .feedback-title { color: var(--accent2); }
+.feedback-text { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
+.next-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+.next-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* =================== RESULTS =================== */
+#resultsScreen {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+.results-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 48px 40px;
+  max-width: 500px;
+  width: 100%;
+}
+.trophy { font-size: 5rem; margin-bottom: 16px; }
+.results-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.results-sub { color: var(--muted); margin-bottom: 32px; }
+.results-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.res-stat {
+  background: var(--surface2);
+  border-radius: 14px;
+  padding: 20px 12px;
+}
+.res-stat-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.res-stat-label { font-size: 0.75rem; color: var(--muted); }
+.results-btns { display: flex; flex-direction: column; gap: 12px; }
+.btn-replay {
+  padding: 16px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  border: none;
+  border-radius: 14px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-replay:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
+.btn-home {
+  padding: 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--muted);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-home:hover { border-color: var(--accent); color: var(--text); }
+
+/* =================== PROFILE =================== */
+#profileScreen { padding: 24px; max-width: 760px; margin: 0 auto; width: 100%; }
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+.profile-info h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.profile-plan {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  margin-top: 6px;
+}
+.plan-free { background: rgba(136,136,170,0.2); color: var(--muted); }
+.plan-pro { background: linear-gradient(135deg, var(--accent4), #ff6b35); color: white; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+}
+.stat-card-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.stat-card-label { font-size: 0.8rem; color: var(--muted); }
+
+.achievements-section h3 {
+  font-family: 'Syne', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-bottom: 14px;
+}
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.badge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 10px;
+  text-align: center;
+  transition: all 0.2s;
+}
+.badge.unlocked { border-color: var(--accent4); background: rgba(247,151,30,0.08); }
+.badge-icon { font-size: 1.8rem; margin-bottom: 6px; }
+.badge-name { font-size: 0.7rem; color: var(--muted); line-height: 1.3; }
+.badge.unlocked .badge-name { color: var(--accent4); }
+
+/* ADMIN */
+.admin-panel {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.admin-panel h3 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--accent);
+}
+.admin-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.admin-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.admin-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.admin-table tr:last-child td { border-bottom: none; }
+.pro-toggle {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.pro-toggle.give { background: var(--accent3); color: #000; }
+.pro-toggle.revoke { background: var(--accent2); color: white; }
+
+.give-pro-section { display: flex; gap: 10px; }
+.give-pro-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+}
+.give-pro-btn {
+  padding: 12px 18px;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.profile-back {
+  margin-bottom: 24px;
+}
+.profile-logout {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid var(--accent2);
+  border-radius: 12px;
+  color: var(--accent2);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+.profile-logout:hover { background: rgba(255,101,132,0.1); }
+
+/* LANG TOGGLE */
+.lang-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+.lang-btn:hover { border-color: var(--accent); color: var(--text); }
+
+/* NOTIFICATION */
+.notif {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  font-size: 0.9rem;
+  z-index: 9999;
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+  max-width: 280px;
+}
+.notif.show { transform: translateX(0); }
+.notif.success { border-color: var(--accent3); }
+.notif.error { border-color: var(--accent2); }
+
+/* FREE LIMIT BANNER */
+.free-banner {
+  background: rgba(247,151,30,0.1);
+  border: 1px solid rgba(247,151,30,0.3);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 0.85rem;
+  color: var(--accent4);
+  margin-bottom: 16px;
+  display: none;
+}
+
+/* =================== LANDING =================== */
+#landingScreen {
+  align-items: center;
+  justify-content: flex-start;
+  padding: 48px 24px 48px;
+  text-align: center;
+}
+.landing-inner { max-width: 620px; width: 100%; margin: auto; }
+.landing-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 3.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+.landing-tag {
+  color: var(--muted);
+  font-size: 1.1rem;
+  margin-bottom: 52px;
+}
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.landing-feat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px 14px;
+  transition: border-color 0.2s;
+}
+.landing-feat:hover { border-color: var(--accent); }
+.landing-feat-icon { font-size: 2rem; margin-bottom: 10px; }
+.landing-feat-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+.landing-feat-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+.landing-lang {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+.landing-lang-btn {
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 22px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+.landing-lang-btn.active {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(108,99,255,0.12);
+}
+.landing-cta {
+  width: 100%;
+  max-width: 340px;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.3px;
+  margin: 0 auto;
+  display: block;
+}
+.landing-cta:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(108,99,255,0.4); }
+.landing-guest {
+  margin-top: 14px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.landing-guest:hover { color: var(--text); }
+.landing-credits {
+  margin-top: 32px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.landing-credits strong { color: var(--text); font-weight: 600; }
+@media (max-width: 600px) {
+  .landing-logo { font-size: 2.8rem; }
+  .landing-features { grid-template-columns: 1fr; gap: 10px; }
+  .landing-cta { max-width: 100%; }
+}
+
+/* =================== BOTTOM NAV =================== */
+/* supprimé */
+
+/* =================== TOUCH / HOVER =================== */
+@media (hover: none) {
+  .btn-primary:hover, .generate-btn:hover, .btn-replay:hover { transform: none; box-shadow: none; }
+  .mode-card:hover { transform: none; }
+  button:active { opacity: 0.8; transform: scale(0.97); }
+  .mode-card:active { transform: scale(0.97); }
+  .answer-btn:active:not(:disabled) { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+  .vf-btn:active:not(:disabled) { transform: scale(0.97); }
+}
+
+/* =================== TABLETTE ≤ 768px =================== */
+@media (max-width: 768px) {
+
+  /* — TOPBAR — */
+  .topbar {
+    padding-top: 14px;
+    padding-bottom: 14px;
+    padding-left: 16px;
+    padding-right: 16px;
+    gap: 8px;
+  }
+  .topbar-stats { gap: 8px; }
+  .stat-pill { padding: 6px 10px; font-size: 0.85rem; }
+  .lang-btn { padding: 8px 12px; min-height: 40px; }
+
+  /* — CONTENU — */
+  .main-content  { padding: 20px 16px 32px; }
+  #gameScreen    { padding: 16px 16px 32px; max-width: 100%; }
+  #resultsScreen { padding: 20px 16px 32px; }
+  #profileScreen { padding: 16px 16px 32px; }
+
+  /* — NOTIFICATION — */
+  .notif {
+    left: 16px; right: 16px;
+    bottom: 24px;
+    max-width: 100%;
+    text-align: center;
+    transform: translateY(150%);
+  }
+  .notif.show { transform: translateY(0); }
+
+  /* — LANDING — */
+  #landingScreen {
+    padding: 32px 20px 48px;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  .landing-inner { margin: 0 auto; }
+  .landing-logo { font-size: 2.8rem; }
+  .landing-features { grid-template-columns: 1fr; gap: 10px; margin-bottom: 28px; }
+  .landing-cta { max-width: 100%; }
+  .landing-tag { margin-bottom: 28px; }
+
+  /* — AUTH — */
+  #authScreen {
+    padding: 32px 16px 40px;
+    justify-content: flex-start;
+    align-items: stretch;
+  }
+  .auth-box { padding: 28px 20px; border-radius: 20px; max-width: 100%; }
+
+  /* — UPLOAD — */
+  .upload-section { margin-bottom: 24px; }
+  .upload-title { font-size: 1.4rem; }
+  .upload-zone { padding: 28px 16px; }
+
+  /* — MODES — */
+  .modes-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .mode-card { padding: 18px 14px; }
+  .mode-icon { font-size: 1.6rem; margin-bottom: 8px; }
+  .mode-name { font-size: 0.9rem; }
+  .mode-desc { font-size: 0.78rem; }
+  .generate-btn { font-size: 1rem; padding: 18px; min-height: 56px; }
+
+  /* — JEU — */
+  .game-back { padding: 12px 16px; min-height: 44px; }
+  .progress-bar { margin-bottom: 20px; }
+  .question-card { padding: 22px 16px; margin-bottom: 14px; }
+  .question-text { font-size: 1.1rem; }
+  .answers-grid { grid-template-columns: 1fr; gap: 10px; }
+  .answer-btn { padding: 18px 16px; font-size: 1rem; min-height: 56px; }
+  .vf-btn { padding: 22px; font-size: 1.3rem; min-height: 80px; }
+  .trou-input { font-size: 1rem; padding: 16px; }
+  .trou-submit { min-height: 52px; font-size: 1rem; }
+  .word-chip { padding: 12px 16px; font-size: 1rem; min-height: 44px; border-radius: 10px; }
+  .ordre-validate { min-height: 52px; font-size: 1rem; }
+  .flashcard-inner { height: 200px; }
+  .flashcard-content { font-size: 1.05rem; }
+  .fc-btn { padding: 16px; font-size: 0.95rem; min-height: 52px; }
+  .feedback-bar { padding: 16px 18px; }
+  .next-btn { min-height: 52px; font-size: 1rem; }
+
+  /* — RÉSULTATS — */
+  .results-card { padding: 28px 18px; border-radius: 20px; }
+  .trophy { font-size: 4rem; }
+  .results-title { font-size: 1.6rem; }
+  .results-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+  .res-stat { padding: 14px 8px; }
+  .res-stat-val { font-size: 1.3rem; }
+  .res-stat-label { font-size: 0.7rem; }
+  .btn-replay, .btn-home { min-height: 52px; font-size: 1rem; }
+
+  /* — PROFIL — */
+  .profile-header { margin-bottom: 20px; }
+  .stat-card-val { font-size: 1.5rem; }
+  .stat-card-label { font-size: 0.85rem; }
+  .badges-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+  .badge { padding: 14px 8px; }
+  .badge-name { font-size: 0.72rem; }
+
+  /* — ADMIN — */
+  .admin-panel { overflow-x: auto; padding: 16px; }
+  .admin-table { min-width: 480px; }
+  .pro-toggle { padding: 10px 14px; min-height: 40px; font-size: 0.8rem; }
+  .give-pro-section { flex-direction: column; gap: 8px; }
+  .give-pro-input { font-size: 1rem; padding: 14px; min-height: 48px; }
+  .give-pro-btn { width: 100%; padding: 14px; font-size: 1rem; min-height: 48px; }
+}
+
+/* =================== MOBILE ≤ 480px =================== */
+@media (max-width: 480px) {
+  .logo-big { font-size: 1.9rem; }
+  .logo-sub { margin-bottom: 20px; }
+  .auth-tab { padding: 12px 6px; font-size: 0.88rem; min-height: 44px; }
+  .input-group label { font-size: 1rem; }
+  .input-group input { font-size: 1rem; padding: 16px; min-height: 52px; }
+  .btn { padding: 16px; min-height: 52px; font-size: 1rem; }
+  .modes-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mode-card { padding: 14px 12px; border-radius: 14px; }
+  .mode-icon { font-size: 1.5rem; margin-bottom: 6px; }
+  .mode-name { font-size: 0.85rem; }
+  .mode-desc { font-size: 0.72rem; }
+  .topbar { padding-left: 12px; padding-right: 12px; }
+  .logo-small { font-size: 1.1rem; }
+  .stat-pill { padding: 5px 8px; font-size: 0.8rem; }
+}
+
+/* =================== TRÈS PETIT ≤ 380px =================== */
+@media (max-width: 380px) {
+  .auth-box { padding: 22px 14px; }
+  .logo-big { font-size: 1.7rem; }
+  .topbar-stats { gap: 4px; }
+  .stat-pill { padding: 4px 7px; font-size: 0.75rem; }
+  .lang-btn { display: none; }
+  .results-stats { grid-template-columns: 1fr; gap: 8px; }
+  .res-stat-val { font-size: 1.5rem; }
+  .landing-logo { font-size: 2.4rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="landingScreen" class="screen active">
+  <div class="landing-inner">
+    <div class="landing-logo">SmartLearn</div>
+    <p class="landing-tag" id="landingTag">Apprends mieux, plus vite 🚀</p>
+
+    <div class="landing-features">
+      <div class="landing-feat">
+        <div class="landing-feat-icon">📸</div>
+        <div class="landing-feat-title" id="lf1t">Importe ton cours</div>
+        <div class="landing-feat-desc" id="lf1d">Photo ou PDF — l'IA génère les exercices automatiquement.</div>
+      </div>
+      <div class="landing-feat">
+        <div class="landing-feat-icon">🎯</div>
+        <div class="landing-feat-title" id="lf2t">5 modes de jeu</div>
+        <div class="landing-feat-desc" id="lf2d">QCM, Vrai/Faux, Trou, Ordre et Flashcards.</div>
+      </div>
+      <div class="landing-feat">
+        <div class="landing-feat-icon">🏆</div>
+        <div class="landing-feat-title" id="lf3t">Suis ta progression</div>
+        <div class="landing-feat-desc" id="lf3d">XP, séries de jours et badges à débloquer.</div>
+      </div>
+    </div>
+
+    <div class="landing-lang">
+      <button class="landing-lang-btn active" onclick="setLandingLang('fr')" id="btnLangFR">🇫🇷 Français</button>
+      <button class="landing-lang-btn" onclick="setLandingLang('en')" id="btnLangEN">🇬🇧 English</button>
+    </div>
+
+    <button class="landing-cta" id="landingCTA" onclick="showScreen('authScreen')">Se connecter / S'inscrire</button>
+    <button class="landing-guest" id="landingGuest" onclick="continueAsGuest()">Continuer en invité</button>
+
+    <div class="landing-credits">
+      <span>Créé par</span>
+      <strong>Anis Benzair</strong> · <strong>Salma Sadek</strong> · <strong>Maxence Gavray</strong>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="authScreen" class="screen">
+  <div class="auth-box">
+    <div class="logo-big">SmartLearn</div>
+    <div class="logo-sub">Apprends mieux, plus vite 🚀</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Connexion</button>
+      <button class="auth-tab" onclick="switchTab('register')">Inscription</button>
+      <button class="auth-tab" onclick="switchTab('guest')">Invité</button>
+    </div>
+
+    <div id="loginForm">
+      <div class="input-group"><label>Email</label><input type="email" id="loginEmail" placeholder="ton@email.com"></div>
+      <div class="input-group"><label>Mot de passe</label><input type="password" id="loginPass" placeholder="••••••••"></div>
+      <button class="btn btn-primary" onclick="login()"><span>Se connecter</span></button>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <div class="input-group"><label>Prénom</label><input type="text" id="regName" placeholder="Ton prénom"></div>
+      <div class="input-group"><label>Email</label><input type="email" id="regEmail" placeholder="ton@email.com"></div>
+      <div class="input-group"><label>Mot de passe</label><input type="password" id="regPass" placeholder="Minimum 6 caractères"></div>
+      <button class="btn btn-primary" onclick="register()"><span>Créer mon compte</span></button>
+    </div>
+
+    <div id="guestForm" style="display:none">
+      <p style="color:var(--muted);margin-bottom:20px;font-size:0.9rem;line-height:1.5">Tu pourras utiliser l'app sans compte. Tes données ne seront pas sauvegardées.</p>
+      <button class="btn btn-primary" onclick="continueAsGuest()"><span>Continuer en invité</span></button>
+    </div>
+
+    <div id="authError" class="auth-error"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="mainScreen" class="screen">
+  <div class="topbar">
+    <div class="logo-small">SmartLearn</div>
+    <div class="topbar-stats">
+      <div class="stat-pill"><span>🔥</span><span id="streakCount">0</span></div>
+      <div class="stat-pill"><span>⭐</span><span id="xpCount">0</span></div>
+      <button class="lang-btn" onclick="toggleLang()" title="Changer la langue">🌐 <span id="langLabel">FR</span></button>
+      <button class="avatar-btn" id="avatarBtn" onclick="showProfile()">?</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="upload-section">
+      <h1 class="upload-title">Importe ton <span>cours</span></h1>
+      <p class="upload-sub">Photo, PDF ou image — l'IA génère les exercices automatiquement</p>
+
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📸</div>
+        <div class="upload-text"><strong>Clique pour importer</strong> ou glisse ton fichier ici</div>
+        <div class="upload-text" style="margin-top:8px;font-size:0.8rem">📷 Images JPG, PNG, WEBP, HEIC — max <strong style="color:var(--text)">5 MB</strong> &nbsp;|&nbsp; 📄 PDF — max <strong style="color:var(--text)">32 MB</strong></div>
+        <div class="upload-preview" id="uploadPreview"></div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,.pdf,.heic,.webp" onchange="handleFile(event)">
+    </div>
+
+    <div class="free-banner" id="freeBanner">
+      ⚡ Tu as utilisé tes 5 parties gratuites aujourd'hui. Passe en Pro pour continuer !
+    </div>
+
+    <p class="modes-title">Choisir un mode de jeu</p>
+    <div class="modes-grid">
+      <div class="mode-card" data-mode="qcm" onclick="selectMode('qcm')">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-name" data-i18n="qcm_name">QCM Flash</div>
+        <div class="mode-desc" data-i18n="qcm_desc">4 choix, 1 bonne réponse. Rapide et efficace.</div>
+      </div>
+      <div class="mode-card" data-mode="vf" onclick="selectMode('vf')">
+        <div class="mode-icon">⚡</div>
+        <div class="mode-name" data-i18n="vf_name">Vrai ou Faux</div>
+        <div class="mode-desc" data-i18n="vf_desc">Affirmations à juger en un instant.</div>
+      </div>
+      <div class="mode-card" data-mode="trou" onclick="selectMode('trou')">
+        <div class="mode-icon">✏️</div>
+        <div class="mode-name" data-i18n="trou_name">Trou à remplir</div>
+        <div class="mode-desc" data-i18n="trou_desc">Complete les phrases clés du cours.</div>
+      </div>
+      <div class="mode-card" data-mode="ordre" onclick="selectMode('ordre')">
+        <div class="mode-icon">🔀</div>
+        <div class="mode-name" data-i18n="ordre_name">Remets en ordre</div>
+        <div class="mode-desc" data-i18n="ordre_desc">Replace les mots dans le bon ordre.</div>
+      </div>
+      <div class="mode-card" data-mode="flashcard" onclick="selectMode('flashcard')">
+        <div class="mode-icon">🃏</div>
+        <div class="mode-name" data-i18n="fc_name">Flashcards</div>
+        <div class="mode-desc" data-i18n="fc_desc">Recto/verso pour mémoriser les concepts.</div>
+        <div class="pro-badge">PRO</div>
+      </div>
+    </div>
+
+    <button class="generate-btn" onclick="generateGame()" id="generateBtn">
+      <span>✨ Générer les exercices</span>
+    </button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" class="screen">
+  <div class="game-header">
+    <button class="game-back" onclick="showMain()">← Retour</button>
+    <div class="game-meta">
+      <div class="lives" id="livesDisplay">❤️❤️❤️</div>
+      <div class="score-display">+<span id="scoreDisplay">0</span> XP</div>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div id="questionArea"></div>
+  <div class="feedback-bar" id="feedbackBar">
+    <div class="feedback-title" id="feedbackTitle"></div>
+    <div class="feedback-text" id="feedbackText"></div>
+  </div>
+  <button class="next-btn" id="nextBtn" onclick="nextQuestion()" style="display:none">Suivant →</button>
+</div>
+
+<!-- RESULTS -->
+<div id="resultsScreen" class="screen">
+  <div class="results-card">
+    <div class="trophy" id="trophyEmoji">🏆</div>
+    <div class="results-title" id="resultsTitle">Bravo !</div>
+    <div class="results-sub" id="resultsSub"></div>
+    <div class="results-stats">
+      <div class="res-stat">
+        <div class="res-stat-val" id="resScore" style="color:var(--accent)">0</div>
+        <div class="res-stat-label">Score</div>
+      </div>
+      <div class="res-stat">
+        <div class="res-stat-val" id="resCorrect" style="color:var(--accent3)">0/0</div>
+        <div class="res-stat-label">Correct</div>
+      </div>
+      <div class="res-stat">
+        <div class="res-stat-val" id="resXP" style="color:var(--accent4)">+0</div>
+        <div class="res-stat-label">XP gagné</div>
+      </div>
+    </div>
+    <div class="results-btns">
+      <button class="btn-replay" onclick="replayGame()">🔄 Rejouer</button>
+      <button class="btn-home" onclick="showMain()">🏠 Accueil</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="profileScreen" class="screen">
+  <div style="max-width:760px;margin:0 auto;width:100%;padding:24px">
+    <button class="game-back profile-back" onclick="showMain()">← Retour</button>
+
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar">?</div>
+      <div class="profile-info">
+        <h2 id="profileName">Utilisateur</h2>
+        <div class="profile-plan" id="profilePlan">Gratuit</div>
+      </div>
+    </div>
+
+    <div id="adminPanelContainer"></div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-val" id="pStreak" style="color:var(--accent2)">0 🔥</div>
+        <div class="stat-card-label">Série actuelle</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-val" id="pXP" style="color:var(--accent4)">0 ⭐</div>
+        <div class="stat-card-label">XP total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-val" id="pGames" style="color:var(--accent)">0</div>
+        <div class="stat-card-label">Parties jouées</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-val" id="pAccuracy" style="color:var(--accent3)">0%</div>
+        <div class="stat-card-label">Précision</div>
+      </div>
+    </div>
+
+    <div class="achievements-section">
+      <h3>SUCCÈS</h3>
+      <div class="badges-grid" id="badgesGrid"></div>
+    </div>
+
+    <button class="profile-logout" onclick="logout()">Se déconnecter</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader"></div>
+  <div class="loading-text" id="loadingText">L'IA analyse ton cours...</div>
+</div>
+
+<!-- NOTIF -->
+<div class="notif" id="notif"></div>
+
+<script>
+// ============= STATE =============
+let currentUser = null;
+let currentFile = null;
+let currentFileData = null;
+let currentMode = 'qcm';
+let questions = [];
+let currentQ = 0;
+let lives = 3;
+let score = 0;
+let correctCount = 0;
+let lang = 'fr';
+let selectedOrder = [];
+let currentCorrectOrder = [];
+let isGuest = false;
+
+const SERVER = window.location.origin;
+
+const i18n = {
+  fr: {
+    qcm_name: 'QCM Flash', qcm_desc: '4 choix, 1 bonne réponse.',
+    vf_name: 'Vrai ou Faux', vf_desc: 'Affirmations à juger.',
+    trou_name: 'Trou à remplir', trou_desc: 'Complète les phrases.',
+    ordre_name: 'Remets en ordre', ordre_desc: 'Replace les mots.',
+    fc_name: 'Flashcards', fc_desc: 'Mémorise les concepts.'
+  },
+  en: {
+    qcm_name: 'Quick Quiz', qcm_desc: '4 choices, 1 right answer.',
+    vf_name: 'True or False', vf_desc: 'Judge each statement.',
+    trou_name: 'Fill the Blank', trou_desc: 'Complete the sentences.',
+    ordre_name: 'Reorder Words', ordre_desc: 'Put words in order.',
+    fc_name: 'Flashcards', fc_desc: 'Memorize key concepts.'
+  }
+};
+
+const landingI18n = {
+  fr: {
+    tag: 'Apprends mieux, plus vite 🚀',
+    lf1t: 'Importe ton cours', lf1d: 'Photo ou PDF — l\'IA génère les exercices automatiquement.',
+    lf2t: '5 modes de jeu', lf2d: 'QCM, Vrai/Faux, Trou, Ordre et Flashcards.',
+    lf3t: 'Suis ta progression', lf3d: 'XP, séries de jours et badges à débloquer.',
+    cta: 'Se connecter / S\'inscrire', guest: 'Continuer en invité'
+  },
+  en: {
+    tag: 'Learn better, faster 🚀',
+    lf1t: 'Import your notes', lf1d: 'Photo or PDF — AI generates exercises automatically.',
+    lf2t: '5 game modes', lf2d: 'Quiz, True/False, Fill-in, Reorder and Flashcards.',
+    lf3t: 'Track your progress', lf3d: 'XP, daily streaks and badges to unlock.',
+    cta: 'Sign in / Sign up', guest: 'Continue as guest'
+  }
+};
+
+function setLandingLang(l) {
+  lang = l;
+  document.getElementById('btnLangFR').classList.toggle('active', l === 'fr');
+  document.getElementById('btnLangEN').classList.toggle('active', l === 'en');
+  const t = landingI18n[l];
+  document.getElementById('landingTag').textContent = t.tag;
+  document.getElementById('lf1t').textContent = t.lf1t;
+  document.getElementById('lf1d').textContent = t.lf1d;
+  document.getElementById('lf2t').textContent = t.lf2t;
+  document.getElementById('lf2d').textContent = t.lf2d;
+  document.getElementById('lf3t').textContent = t.lf3t;
+  document.getElementById('lf3d').textContent = t.lf3d;
+  document.getElementById('landingCTA').textContent = t.cta;
+  document.getElementById('landingGuest').textContent = t.guest;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (i18n[l][key]) el.textContent = i18n[l][key];
+  });
+}
+
+const ACHIEVEMENTS = [
+  { id: 'first', icon: '🌟', name: 'Premier pas' },
+  { id: 'streak3', icon: '🔥', name: '3 jours de suite' },
+  { id: 'streak7', icon: '⚡', name: '7 jours de suite' },
+  { id: 'games10', icon: '🎮', name: '10 parties' },
+  { id: 'games50', icon: '🏅', name: '50 parties' },
+  { id: 'perfect', icon: '💎', name: 'Parfait' },
+  { id: 'xp500', icon: '⭐', name: '500 XP' },
+  { id: 'pro', icon: '👑', name: 'Membre Pro' }
+];
+
+// ============= AUTH =============
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['login','register','guest'][i] === tab);
+  });
+  document.getElementById('loginForm').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('guestForm').style.display = tab === 'guest' ? '' : 'none';
+  document.getElementById('authError').style.display = 'none';
+}
+
+async function autoLogin() {
+  const token = localStorage.getItem('smartlearn_token');
+  if (!token) { showScreen('landingScreen'); return; }
+  try {
+    const r = await fetch(SERVER + '/api/session', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ token })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      currentUser = d.user;
+      isGuest = false;
+      enterApp();
+    } else {
+      localStorage.removeItem('smartlearn_token');
+      showScreen('landingScreen');
+    }
+  } catch(e) { showScreen('landingScreen'); }
+}
+
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if (!email || !pass) return showAuthError('Remplis tous les champs');
+  try {
+    const r = await fetch(SERVER + '/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password: pass })
+    });
+    const d = await r.json();
+    if (!r.ok) return showAuthError(d.error);
+    currentUser = d.user;
+    isGuest = false;
+    if (d.token) localStorage.setItem('smartlearn_token', d.token);
+    enterApp();
+  } catch(e) { showAuthError('Impossible de se connecter. Réessaie dans quelques instants.'); }
+}
+
+async function register() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  if (!name || !email || !pass) return showAuthError('Remplis tous les champs');
+  if (pass.length < 6) return showAuthError('Mot de passe trop court');
+  try {
+    const r = await fetch(SERVER + '/api/register', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, email, password: pass })
+    });
+    const d = await r.json();
+    if (!r.ok) return showAuthError(d.error);
+    currentUser = d.user;
+    isGuest = false;
+    if (d.token) localStorage.setItem('smartlearn_token', d.token);
+    enterApp();
+  } catch(e) { showAuthError('Impossible de se connecter. Réessaie dans quelques instants.'); }
+}
+
+function continueAsGuest() {
+  isGuest = true;
+  currentUser = { name: 'Invité', plan: 'free', xp: 0, streak: 0, gamesPlayed: 0, correctAnswers: 0, totalAnswers: 0, achievements: [] };
+  enterApp();
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function enterApp() {
+  showScreen('mainScreen');
+  updateTopbar();
+}
+
+async function logout() {
+  const token = localStorage.getItem('smartlearn_token');
+  if (token) {
+    try {
+      await fetch(SERVER + '/api/logout', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ token })
+      });
+    } catch(e) {}
+    localStorage.removeItem('smartlearn_token');
+  }
+  currentUser = null;
+  isGuest = false;
+  showScreen('landingScreen');
+}
+
+// ============= SCREENS =============
+const APP_SCREENS = ['mainScreen', 'gameScreen', 'resultsScreen', 'profileScreen'];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showMain() {
+  const inGame = document.getElementById('gameScreen').classList.contains('active');
+  if (inGame && questions.length > 0 && currentQ < questions.length) {
+    if (!confirm('Quitter la partie en cours ? Ta progression sera perdue.')) return;
+  }
+  showScreen('mainScreen');
+}
+
+function showProfile() {
+  if (!currentUser) return;
+  const u = currentUser;
+  document.getElementById('profileAvatar').textContent = u.name.charAt(0).toUpperCase();
+  document.getElementById('profileName').textContent = u.name;
+  const planEl = document.getElementById('profilePlan');
+  planEl.textContent = u.isAdmin ? '👑 Admin' : (u.plan === 'pro' ? '⭐ Pro' : '🎓 Gratuit');
+  planEl.className = 'profile-plan ' + (u.plan === 'pro' ? 'plan-pro' : 'plan-free');
+  document.getElementById('pStreak').textContent = (u.streak||0) + ' 🔥';
+  document.getElementById('pXP').textContent = (u.xp||0) + ' ⭐';
+  document.getElementById('pGames').textContent = u.gamesPlayed||0;
+  const acc = u.totalAnswers > 0 ? Math.round((u.correctAnswers/u.totalAnswers)*100) : 0;
+  document.getElementById('pAccuracy').textContent = acc + '%';
+
+  const grid = document.getElementById('badgesGrid');
+  grid.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const unlocked = (u.achievements||[]).includes(a.id);
+    grid.innerHTML += `<div class="badge ${unlocked?'unlocked':''}">
+      <div class="badge-icon">${unlocked ? a.icon : '🔒'}</div>
+      <div class="badge-name">${a.name}</div>
+    </div>`;
+  });
+
+  const adminC = document.getElementById('adminPanelContainer');
+  adminC.innerHTML = '';
+  if (u.isAdmin) renderAdminPanel();
+
+  showScreen('profileScreen');
+}
+
+async function renderAdminPanel() {
+  try {
+    const r = await fetch(SERVER + '/api/admin/users', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email: currentUser.email, token: localStorage.getItem('smartlearn_token') || '' })
+    });
+    const d = await r.json();
+    const users = d.users || [];
+    let rows = users.map(u => `
+      <tr>
+        <td>${escapeHtml(u.name)}</td>
+        <td style="color:var(--muted);font-size:0.8rem">${escapeHtml(u.email)}</td>
+        <td>${u.plan === 'pro' ? '<span style="color:var(--accent4)">Pro</span>' : 'Free'}</td>
+        <td>${parseInt(u.gamesPlayed) || 0}</td>
+        <td>
+          <button class="pro-toggle ${u.plan==='pro'?'revoke':'give'}"
+            data-email="${escapeHtml(u.email)}" data-plan="${escapeHtml(u.plan)}"
+            onclick="togglePro(this.dataset.email, this.dataset.plan)">
+            ${u.plan==='pro' ? 'Retirer Pro' : 'Donner Pro'}
+          </button>
+        </td>
+      </tr>`).join('');
+
+    document.getElementById('adminPanelContainer').innerHTML = `
+      <div class="admin-panel">
+        <h3>👑 Panneau Admin</h3>
+        <table class="admin-table">
+          <tr><th>Nom</th><th>Email</th><th>Plan</th><th>Parties</th><th>Action</th></tr>
+          ${rows}
+        </table>
+        <div class="give-pro-section">
+          <input class="give-pro-input" id="giveProEmail" placeholder="email@exemple.com">
+          <button class="give-pro-btn" onclick="givePro()">Donner Pro</button>
+        </div>
+      </div>`;
+  } catch(e) {}
+}
+
+async function togglePro(email, currentPlan) {
+  const newPlan = currentPlan === 'pro' ? 'free' : 'pro';
+  await fetch(SERVER + '/api/admin/set-pro', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ adminEmail: currentUser.email, targetEmail: email, plan: newPlan, token: localStorage.getItem('smartlearn_token') || '' })
+  });
+  renderAdminPanel();
+  showNotif('✅ Plan mis à jour !', 'success');
+}
+
+async function givePro() {
+  const email = document.getElementById('giveProEmail').value.trim();
+  if (!email) return;
+  await fetch(SERVER + '/api/admin/set-pro', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ adminEmail: currentUser.email, targetEmail: email, plan: 'pro', token: localStorage.getItem('smartlearn_token') || '' })
+  });
+  document.getElementById('giveProEmail').value = '';
+  renderAdminPanel();
+  showNotif('✅ Pro accordé à ' + email, 'success');
+}
+
+// ============= TOPBAR =============
+function updateTopbar() {
+  if (!currentUser) return;
+  document.getElementById('streakCount').textContent = currentUser.streak || 0;
+  document.getElementById('xpCount').textContent = currentUser.xp || 0;
+  document.getElementById('avatarBtn').textContent = currentUser.name.charAt(0).toUpperCase();
+}
+
+// ============= LANG =============
+function toggleLang() {
+  lang = lang === 'fr' ? 'en' : 'fr';
+  document.getElementById('langLabel').textContent = lang.toUpperCase();
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (i18n[lang][key]) el.textContent = i18n[lang][key];
+  });
+}
+
+// ============= FILE =============
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const isPDF = file.type === 'application/pdf';
+  const maxSize = isPDF ? 32 * 1024 * 1024 : 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    showNotif(`❌ Fichier trop lourd (max ${isPDF ? '32 MB pour les PDFs' : '5 MB pour les images'})`, 'error');
+    e.target.value = '';
+    return;
+  }
+  currentFile = file;
+  const preview = document.getElementById('uploadPreview');
+  const zone = document.getElementById('uploadZone');
+  zone.classList.add('has-file');
+  preview.textContent = (isPDF ? '📄 ' : '📷 ') + file.name;
+
+  const reader = new FileReader();
+  reader.onload = ev => { currentFileData = ev.target.result; };
+  reader.readAsDataURL(file);
+}
+
+// drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--accent)'; });
+zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const isPDF = file.type === 'application/pdf';
+    const maxSize = isPDF ? 32 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) { showNotif(`❌ Fichier trop lourd (max ${isPDF ? '32 MB pour les PDFs' : '5 MB pour les images'})`, 'error'); return; }
+    currentFile = file;
+    zone.classList.add('has-file');
+    document.getElementById('uploadPreview').textContent = (isPDF ? '📄 ' : '📷 ') + file.name;
+    const reader = new FileReader();
+    reader.onload = ev => { currentFileData = ev.target.result; };
+    reader.readAsDataURL(file);
+  }
+});
+
+// ============= MODE =============
+function selectMode(mode) {
+  if (mode === 'flashcard' && currentUser && currentUser.plan !== 'pro') {
+    showNotif('🔒 Les Flashcards sont réservées au Pro', 'error');
+    return;
+  }
+  currentMode = mode;
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.toggle('selected', c.dataset.mode === mode));
+}
+
+// ============= GENERATE =============
+async function generateGame() {
+  if (!currentFileData) return showNotif('📸 Importe un cours d\'abord', 'error');
+
+
+  showLoading(true, 'L\'IA analyse ton cours...');
+
+  const isPDF = currentFile.type === 'application/pdf';
+  const isImage = currentFile.type.startsWith('image/') || currentFile.type === 'image/heic';
+  let messages;
+
+  const prompt = buildPrompt();
+
+  if (isImage) {
+    const base64 = currentFileData.split(',')[1];
+    const mtype = currentFile.type === 'image/heic' ? 'image/jpeg' : currentFile.type;
+    messages = [{
+      role: 'user',
+      content: [
+        { type: 'image', source: { type: 'base64', media_type: mtype, data: base64 } },
+        { type: 'text', text: prompt }
+      ]
+    }];
+  } else if (isPDF) {
+    const base64 = currentFileData.split(',')[1];
+    messages = [{
+      role: 'user',
+      content: [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+        { type: 'text', text: prompt }
+      ]
+    }];
+  } else {
+    messages = [{ role: 'user', content: `Voici un fichier de cours nommé "${currentFile.name}". ${prompt}` }];
+  }
+
+  try {
+    const r = await fetch(SERVER + '/api/claude', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ messages, token: localStorage.getItem('smartlearn_token') || '' })
+    });
+    const d = await r.json();
+    showLoading(false);
+    if (!r.ok) {
+      if (r.status === 429) {
+        document.getElementById('freeBanner').style.display = 'block';
+        return showNotif('⚡ ' + d.error, 'error');
+      }
+      return showNotif('❌ ' + translateError(d.error), 'error');
+    }
+
+    const parsed = parseQuestions(d.content);
+    if (!parsed || parsed.length === 0) return showNotif('❌ Impossible de générer les questions. Réessaie avec une autre image.', 'error');
+
+    questions = parsed;
+    startGame();
+  } catch(e) {
+    showLoading(false);
+    showNotif('❌ Erreur de connexion. Réessaie dans quelques instants.', 'error');
+  }
+}
+
+function translateError(msg) {
+  if (!msg) return 'Une erreur est survenue. Réessaie.';
+  const m = msg.toLowerCase();
+  if (m.includes('invalid_api_key') || m.includes('invalid api key') || m.includes('authentication'))
+    return 'Clé API invalide. Vérifie ta clé dans les paramètres.';
+  if (m.includes('rate_limit') || m.includes('rate limit') || m.includes('too many'))
+    return 'Trop de requêtes envoyées. Attends quelques secondes et réessaie.';
+  if (m.includes('overloaded') || m.includes('capacity'))
+    return 'Le service IA est temporairement surchargé. Réessaie dans un instant.';
+  if (m.includes('timeout') || m.includes('timed out'))
+    return 'La requête a pris trop de temps. Réessaie.';
+  if (m.includes('image') && (m.includes('size') || m.includes('large') || m.includes('too big')))
+    return 'Image trop lourde pour être analysée. Utilise une image de moins de 5 MB.';
+  if (m.includes('context') || m.includes('token'))
+    return 'Le fichier est trop volumineux pour être analysé. Essaie avec un fichier plus petit.';
+  if (m.includes('permission') || m.includes('credit') || m.includes('balance'))
+    return 'Quota API insuffisant. Contacte l\'administrateur.';
+  return 'Une erreur est survenue. Réessaie dans quelques instants.';
+}
+
+function buildPrompt() {
+  const langNote = lang === 'en' ? 'Generate everything in English.' : 'Génère tout en français.';
+  const modes = {
+    qcm: `Génère exactement 6 questions QCM au format JSON strict:
+[{"question":"...","options":["A","B","C","D"],"correct":0,"explanation":"..."}]
+correct = index de la bonne réponse (0-3). ${langNote} Réponds UNIQUEMENT avec le JSON, rien d'autre.`,
+    vf: `Génère 6 affirmations Vrai/Faux au format JSON:
+[{"question":"...","correct":true,"explanation":"..."}]
+${langNote} Réponds UNIQUEMENT avec le JSON.`,
+    trou: `Génère 5 phrases à trou au format JSON:
+[{"question":"La ___ est ...","answer":"réponse","explanation":"..."}]
+___ = le mot manquant. ${langNote} UNIQUEMENT le JSON.`,
+    ordre: `Génère 5 phrases à remettre en ordre au format JSON:
+[{"words":["mot1","mot2","mot3","mot4","mot5"],"explanation":"..."}]
+Les mots dans l'ordre correct. ${langNote} UNIQUEMENT le JSON.`,
+    flashcard: `Génère 8 flashcards au format JSON:
+[{"front":"Terme ou question","back":"Définition ou réponse"}]
+${langNote} UNIQUEMENT le JSON.`
+  };
+  return `Tu es un professeur expert. Analyse ce cours et ${modes[currentMode]}`;
+}
+
+function parseQuestions(text) {
+  try {
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) return null;
+    return JSON.parse(match[0]);
+  } catch(e) { return null; }
+}
+
+// ============= GAME =============
+function startGame() {
+  currentQ = 0; lives = 3; score = 0; correctCount = 0;
+  updateLives(); updateScore(); updateProgress();
+  document.getElementById('feedbackBar').className = 'feedback-bar';
+  document.getElementById('nextBtn').style.display = 'none';
+  showScreen('gameScreen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  if (currentQ >= questions.length) { endGame(); return; }
+  const q = questions[currentQ];
+  const area = document.getElementById('questionArea');
+  document.getElementById('feedbackBar').className = 'feedback-bar';
+  document.getElementById('nextBtn').style.display = 'none';
+  updateProgress();
+
+  if (currentMode === 'qcm') renderQCM(q, area);
+  else if (currentMode === 'vf') renderVF(q, area);
+  else if (currentMode === 'trou') renderTrou(q, area);
+  else if (currentMode === 'ordre') renderOrdre(q, area);
+  else if (currentMode === 'flashcard') renderFlashcard(q, area);
+}
+
+function qCard(num, total, text) {
+  return `<div class="question-card">
+    <div class="question-num">Question ${num} / ${total}</div>
+    <div class="question-text">${text}</div>
+  </div>`;
+}
+
+function renderQCM(q, area) {
+  const opts = q.options.map((o, i) =>
+    `<button class="answer-btn" onclick="checkQCM(${i}, ${q.correct}, this)">${o}</button>`
+  ).join('');
+  area.innerHTML = qCard(currentQ+1, questions.length, q.question) +
+    `<div class="answers-grid">${opts}</div>`;
+}
+
+function checkQCM(idx, correct, btn) {
+  document.querySelectorAll('.answer-btn').forEach((b,i) => {
+    b.disabled = true;
+    if (i === correct) b.classList.add('correct');
+  });
+  if (idx === correct) { correctCount++; score += 20; showFeedback(true, questions[currentQ].explanation); }
+  else { btn.classList.add('wrong'); lives--; updateLives(); score += 5; showFeedback(false, questions[currentQ].explanation); }
+  updateScore();
+  if (lives <= 0) { setTimeout(endGame, 1800); return; }
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function renderVF(q, area) {
+  area.innerHTML = qCard(currentQ+1, questions.length, q.question) +
+    `<div class="vf-grid">
+      <button class="vf-btn vrai" onclick="checkVF(true, ${q.correct}, this)">✅ VRAI</button>
+      <button class="vf-btn faux" onclick="checkVF(false, ${q.correct}, this)">❌ FAUX</button>
+    </div>`;
+}
+
+function checkVF(answer, correct, btn) {
+  document.querySelectorAll('.vf-btn').forEach(b => b.disabled = true);
+  const ok = answer === correct;
+  btn.classList.add(ok ? 'correct' : 'wrong');
+  if (!ok) { lives--; updateLives(); score += 5; } else { correctCount++; score += 15; }
+  showFeedback(ok, questions[currentQ].explanation);
+  updateScore();
+  if (lives <= 0) { setTimeout(endGame, 1800); return; }
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function renderTrou(q, area) {
+  area.innerHTML = qCard(currentQ+1, questions.length, q.question.replace('___', '<strong style="color:var(--accent)">___</strong>')) +
+    `<input class="trou-input" id="trouInput" placeholder="Ta réponse..." onkeydown="if(event.key==='Enter')checkTrou()">
+    <button class="trou-submit" onclick="checkTrou()">Valider ✓</button>`;
+  setTimeout(() => document.getElementById('trouInput')?.focus(), 100);
+}
+
+function normalizeText(s) {
+  return s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function checkTrou() {
+  const input = document.getElementById('trouInput');
+  if (!input) return;
+  const val = normalizeText(input.value);
+  const ans = normalizeText(questions[currentQ].answer);
+  const ok = val === ans;
+  input.disabled = true;
+  document.querySelector('.trou-submit').disabled = true;
+  if (ok) { correctCount++; score += 25; } else { lives--; updateLives(); score += 5; }
+  showFeedback(ok, `Réponse correcte : ${questions[currentQ].answer}`);
+  updateScore();
+  if (lives <= 0) { setTimeout(endGame, 1800); return; }
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function renderOrdre(q, area) {
+  selectedOrder = [];
+  currentCorrectOrder = [...q.words];
+  const shuffled = [...q.words].sort(() => Math.random() - 0.5);
+  area.innerHTML = qCard(currentQ+1, questions.length, 'Remets ces mots dans le bon ordre :') +
+    `<div class="ordre-words" id="ordreSelected"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px" id="ordrePool">
+      ${shuffled.map(w => `<button class="word-chip" onclick="pickWord(this)">${w}</button>`).join('')}
+    </div>
+    <button class="ordre-validate" onclick="validateOrdre()">Valider ✓</button>`;
+}
+
+function pickWord(btn) {
+  const word = btn.textContent;
+  if (btn.classList.contains('selected')) {
+    const idx = selectedOrder.lastIndexOf(word);
+    if (idx !== -1) selectedOrder.splice(idx, 1);
+    btn.classList.remove('selected');
+  } else {
+    selectedOrder.push(word);
+    btn.classList.add('selected');
+  }
+  document.getElementById('ordreSelected').innerHTML =
+    selectedOrder.map(w => `<span class="word-chip selected">${w}</span>`).join('');
+}
+
+function validateOrdre() {
+  const ok = JSON.stringify(selectedOrder) === JSON.stringify(currentCorrectOrder);
+  document.querySelectorAll('.word-chip').forEach(b => b.disabled = true);
+  document.querySelector('.ordre-validate').disabled = true;
+  if (ok) { correctCount++; score += 30; } else { lives--; updateLives(); score += 5; }
+  showFeedback(ok, 'Ordre correct : ' + currentCorrectOrder.join(' → '));
+  updateScore();
+  if (lives <= 0) { setTimeout(endGame, 1800); return; }
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function renderFlashcard(q, area) {
+  area.innerHTML = `
+    <div class="question-card"><div class="question-num">Flashcard ${currentQ+1} / ${questions.length}</div></div>
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="flashcard-inner">
+        <div class="flashcard-front">
+          <div class="flashcard-label">RECTO — Clique pour retourner</div>
+          <div class="flashcard-content">${q.front}</div>
+          <div class="flashcard-hint">👆 Clique pour voir la réponse</div>
+        </div>
+        <div class="flashcard-back">
+          <div class="flashcard-label">VERSO</div>
+          <div class="flashcard-content">${q.back}</div>
+        </div>
+      </div>
+    </div>
+    <div class="flashcard-actions" id="fcActions" style="display:none">
+      <button class="fc-btn review" onclick="fcAnswer('review')">🔁 À revoir</button>
+      <button class="fc-btn hard" onclick="fcAnswer('hard')">😅 Difficile</button>
+      <button class="fc-btn know" onclick="fcAnswer('know')">✅ Je sais !</button>
+    </div>`;
+}
+
+function flipCard() {
+  const fc = document.getElementById('flashcard');
+  fc.classList.toggle('flipped');
+  document.getElementById('fcActions').style.display = 'flex';
+}
+
+function fcAnswer(level) {
+  if (level === 'know') { correctCount++; score += 20; }
+  else if (level === 'hard') { score += 10; }
+  updateScore();
+  currentQ++;
+  if (currentQ >= questions.length) endGame(); else renderQuestion();
+}
+
+// ============= UI HELPERS =============
+function showFeedback(correct, text) {
+  const bar = document.getElementById('feedbackBar');
+  const title = document.getElementById('feedbackTitle');
+  const desc = document.getElementById('feedbackText');
+  bar.className = 'feedback-bar show ' + (correct ? 'correct-fb' : 'wrong-fb');
+  title.textContent = correct ? (lang==='fr'?'✅ Correct !':'✅ Correct!') : (lang==='fr'?'❌ Raté !':'❌ Wrong!');
+  desc.textContent = text || '';
+}
+
+function nextQuestion() {
+  currentQ++;
+  document.getElementById('feedbackBar').className = 'feedback-bar';
+  document.getElementById('nextBtn').style.display = 'none';
+  renderQuestion();
+}
+
+function updateLives() {
+  document.getElementById('livesDisplay').textContent = '❤️'.repeat(Math.max(0,lives)) + '🖤'.repeat(Math.max(0,3-lives));
+}
+function updateScore() { document.getElementById('scoreDisplay').textContent = score; }
+function updateProgress() {
+  const pct = questions.length > 0 ? (currentQ / questions.length) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ============= END GAME =============
+function endGame() {
+  const total = questions.length;
+  const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+  let trophy = '😤', title = 'Continue !';
+  if (pct >= 90) { trophy = '🏆'; title = 'Parfait !'; }
+  else if (pct >= 70) { trophy = '🥇'; title = 'Excellent !'; }
+  else if (pct >= 50) { trophy = '🥈'; title = 'Pas mal !'; }
+  else if (pct >= 30) { trophy = '🥉'; title = 'En progrès'; }
+
+  document.getElementById('trophyEmoji').textContent = trophy;
+  document.getElementById('resultsTitle').textContent = title;
+  document.getElementById('resultsSub').textContent = `${pct}% de réussite sur ${total} questions`;
+  document.getElementById('resScore').textContent = score;
+  document.getElementById('resCorrect').textContent = correctCount + '/' + total;
+  document.getElementById('resXP').textContent = '+' + score;
+
+  // update user
+  if (currentUser && !isGuest) {
+    currentUser.xp = (currentUser.xp || 0) + score;
+    currentUser.gamesPlayed = (currentUser.gamesPlayed || 0) + 1;
+    currentUser.correctAnswers = (currentUser.correctAnswers || 0) + correctCount;
+    currentUser.totalAnswers = (currentUser.totalAnswers || 0) + total;
+
+    const today = new Date().toDateString();
+    if (currentUser.lastPlayDate !== today) {
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      currentUser.streak = currentUser.lastPlayDate === yesterday ? (currentUser.streak || 0) + 1 : 1;
+      currentUser.lastPlayDate = today;
+    }
+
+    checkAchievements();
+    updateTopbar();
+    saveStats();
+  }
+
+  showScreen('resultsScreen');
+}
+
+function checkAchievements() {
+  const u = currentUser;
+  const add = id => { if (!u.achievements.includes(id)) u.achievements.push(id); };
+  if (u.gamesPlayed >= 1) add('first');
+  if (u.streak >= 3) add('streak3');
+  if (u.streak >= 7) add('streak7');
+  if (u.gamesPlayed >= 10) add('games10');
+  if (u.gamesPlayed >= 50) add('games50');
+  if (u.xp >= 500) add('xp500');
+  if (u.plan === 'pro') add('pro');
+  const total = questions.length;
+  if (total > 0 && correctCount === total) add('perfect');
+}
+
+async function saveStats() {
+  if (!currentUser || isGuest) return;
+  try {
+    await fetch(SERVER + '/api/update-stats', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token: localStorage.getItem('smartlearn_token') || '', ...currentUser })
+    });
+  } catch(e) {}
+}
+
+function replayGame() {
+  questions = [...questions].sort(() => Math.random() - 0.5);
+  startGame();
+}
+
+// ============= LOADING / NOTIF =============
+function showLoading(show, text) {
+  const ov = document.getElementById('loadingOverlay');
+  ov.classList.toggle('active', show);
+  if (text) document.getElementById('loadingText').textContent = text;
+}
+
+let notifTimer;
+function showNotif(msg, type = 'success') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = 'notif show ' + type;
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ============= UTILS =============
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Init
+selectMode('qcm');
+autoLogin();
+</script>
+</body>
+</html>
