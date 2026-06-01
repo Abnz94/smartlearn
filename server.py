@@ -231,9 +231,10 @@ def register():
             return jsonify({'error': 'Email déjà utilisé'}), 400
         is_admin = 1 if (email == ADMIN_EMAIL and password == ADMIN_PASSWORD) else 0
         plan     = 'pro' if is_admin else 'free'
+        free_credits = 0 if is_admin else 3  # 3 crédits offerts à l'inscription
         c.execute(
-            'INSERT INTO users (email, name, password, plan, is_admin) VALUES (?, ?, ?, ?, ?)',
-            (email, name, hash_password(password), plan, is_admin)
+            'INSERT INTO users (email, name, password, plan, is_admin, credits) VALUES (?, ?, ?, ?, ?, ?)',
+            (email, name, hash_password(password), plan, is_admin, free_credits)
         )
         c.commit()
 
@@ -427,6 +428,22 @@ def create_checkout():
         return jsonify({'url': session.url})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/add-credits', methods=['POST'])
+def admin_add_credits():
+    data   = request.get_json(silent=True) or {}
+    token  = data.get('token', '')
+    email  = get_email_from_token(token)
+    if not email or email != ADMIN_EMAIL:
+        return jsonify({'error': 'Non autorisé'}), 403
+    target  = data.get('targetEmail', '').strip().lower()
+    amount  = int(data.get('amount', 3))
+    with get_db() as c:
+        if not c.execute('SELECT 1 FROM users WHERE email = ?', (target,)).fetchone():
+            return jsonify({'error': 'Utilisateur introuvable'}), 404
+        c.execute('UPDATE users SET credits = credits + ? WHERE email = ?', (amount, target))
+        c.commit()
+    return jsonify({'success': True, 'added': amount})
 
 @app.route('/api/stripe-webhook', methods=['POST'])
 def stripe_webhook():
