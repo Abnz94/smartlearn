@@ -760,6 +760,49 @@ body::before {
 .plan-free { background: rgba(136,136,170,0.2); color: var(--muted); }
 .plan-pro { background: linear-gradient(135deg, var(--accent4), #ff6b35); color: white; }
 
+/* Crédits */
+.credits-box {
+  background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(255,101,132,0.1));
+  border: 1px solid rgba(108,99,255,0.3);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.credits-info { flex: 1; }
+.credits-count { font-size: 2rem; font-weight: 800; color: var(--accent); }
+.credits-label { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+.btn-buy {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.btn-buy:hover { opacity: 0.85; }
+.no-credits-banner {
+  background: linear-gradient(135deg, rgba(255,101,132,0.2), rgba(255,107,53,0.15));
+  border: 1px solid rgba(255,101,132,0.4);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 12px 0;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--accent2);
+  font-weight: 600;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1297,7 +1340,7 @@ body::before {
     </div>
 
     <div class="free-banner" id="freeBanner">
-      ⚡ Tu as utilisé tes 5 parties gratuites aujourd'hui. Passe en Pro pour continuer !
+      ⚡ Tu n'as plus de crédits. <a href="#" onclick="buyCredits()" style="color:var(--accent);font-weight:700;">Acheter un pack →</a>
     </div>
 
     <p class="modes-title">Choisir un mode de jeu</p>
@@ -1395,6 +1438,15 @@ body::before {
     </div>
 
     <div id="adminPanelContainer"></div>
+
+    <!-- Crédits (masqué pour Pro et Admin) -->
+    <div class="credits-box" id="creditsBox" style="display:none">
+      <div class="credits-info">
+        <div class="credits-count" id="creditsCount">0</div>
+        <div class="credits-label">crédits restants · 1 crédit = 1 génération</div>
+      </div>
+      <button class="btn-buy" onclick="buyCredits()">💳 Acheter 3 crédits — 5€</button>
+    </div>
 
     <div class="stats-grid">
       <div class="stat-card">
@@ -1540,6 +1592,26 @@ async function autoLogin() {
       currentUser = d.user;
       isGuest = false;
       enterApp();
+      // Vérifie si retour de paiement Stripe
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('payment') === 'success') {
+        history.replaceState({}, '', '/');
+        showNotif('✅ Paiement réussi ! Vos crédits ont été ajoutés.', 'success');
+        // Recharge les crédits depuis l'API
+        setTimeout(async () => {
+          try {
+            const cr = await fetch(SERVER + '/api/credits', {
+              method: 'POST', headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({token})
+            });
+            const cd = await cr.json();
+            if (cr.ok) { currentUser.credits = cd.credits; }
+          } catch(e) {}
+        }, 1500);
+      } else if (params.get('payment') === 'cancel') {
+        history.replaceState({}, '', '/');
+        showNotif('❌ Paiement annulé.', 'error');
+      }
     } else {
       localStorage.removeItem('smartlearn_token');
       showScreen('landingScreen');
@@ -1635,6 +1707,26 @@ function showMain() {
   showScreen('mainScreen');
 }
 
+async function buyCredits() {
+  if (!currentUser) return;
+  const token = localStorage.getItem('sl_token');
+  try {
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({token})
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data.error || 'Erreur lors du paiement');
+    }
+  } catch(e) {
+    alert('Erreur réseau');
+  }
+}
+
 function showProfile() {
   if (!currentUser) return;
   const u = currentUser;
@@ -1643,6 +1735,14 @@ function showProfile() {
   const planEl = document.getElementById('profilePlan');
   planEl.textContent = u.isAdmin ? '👑 Admin' : (u.plan === 'pro' ? '⭐ Pro' : '🎓 Gratuit');
   planEl.className = 'profile-plan ' + (u.plan === 'pro' ? 'plan-pro' : 'plan-free');
+  // Afficher la box crédits uniquement pour les users free non admin
+  const creditsBox = document.getElementById('creditsBox');
+  if (!u.isAdmin && u.plan !== 'pro') {
+    creditsBox.style.display = 'flex';
+    document.getElementById('creditsCount').textContent = u.credits || 0;
+  } else {
+    creditsBox.style.display = 'none';
+  }
   document.getElementById('pStreak').textContent = (u.streak||0) + ' 🔥';
   document.getElementById('pXP').textContent = (u.xp||0) + ' ⭐';
   document.getElementById('pGames').textContent = u.gamesPlayed||0;
@@ -1842,7 +1942,11 @@ async function generateGame() {
     showLoading(false);
     if (!r.ok) {
       if (r.status === 429) {
-        document.getElementById('freeBanner').style.display = 'block';
+        document.getElementById('freeBanner').style.display = 'flex';
+        if (d.no_credits) {
+          // Mettre à jour le compteur de crédits
+          if (currentUser) { currentUser.credits = 0; }
+        }
         return showNotif('⚡ ' + d.error, 'error');
       }
       return showNotif('❌ ' + translateError(d.error), 'error');
