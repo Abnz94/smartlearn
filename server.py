@@ -388,8 +388,10 @@ def update_stats():
 
 # ─── DÉMARRAGE ───────────────────────────────────────────────────────────────
 
+# Initialise la DB au démarrage (fonctionne avec gunicorn ET python directement)
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     port = int(os.getenv('PORT', 8000))
     print('=' * 50)
     print('  SmartLearn — Serveur Flask')
