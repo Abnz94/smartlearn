@@ -25,6 +25,8 @@ SMTP_USER      = os.getenv('SMTP_USER', ADMIN_EMAIL)
 SMTP_PASSWORD  = os.getenv('SMTP_PASSWORD', '')
 
 DB_FILE      = os.getenv('DB_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'smartlearn.db'))
+# Crée le dossier parent si nécessaire (ex: /data sur Railway)
+os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
 SESSION_DAYS = 30
 EMAIL_RE     = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
