@@ -1709,7 +1709,7 @@ function showMain() {
 
 async function buyCredits() {
   if (!currentUser) return;
-  const token = localStorage.getItem('sl_token');
+  const token = localStorage.getItem('smartlearn_token');
   try {
     const res = await fetch('/api/create-checkout', {
       method: 'POST',
