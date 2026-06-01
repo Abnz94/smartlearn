@@ -6,6 +6,11 @@ from flask import Flask, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
+try:
+    import stripe
+    STRIPE_AVAILABLE = True
+except ImportError:
+    STRIPE_AVAILABLE = False
 
 load_dotenv()
 
@@ -16,13 +21,20 @@ if REDIS_URL:
 else:
     limiter = Limiter(app=app, key_func=get_remote_address, default_limits=[])
 
-ADMIN_EMAIL    = os.getenv('ADMIN_EMAIL', '').strip().lower()
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '').strip()
-CLAUDE_API_KEY = os.getenv('API_KEY', '').strip()
-SMTP_HOST      = 'smtp.gmail.com'
-SMTP_PORT      = 587
-SMTP_USER      = os.getenv('SMTP_USER', ADMIN_EMAIL)
-SMTP_PASSWORD  = os.getenv('SMTP_PASSWORD', '')
+ADMIN_EMAIL          = os.getenv('ADMIN_EMAIL', '').strip().lower()
+ADMIN_PASSWORD       = os.getenv('ADMIN_PASSWORD', '').strip()
+CLAUDE_API_KEY       = os.getenv('API_KEY', '').strip()
+SMTP_HOST            = 'smtp.gmail.com'
+SMTP_PORT            = 587
+SMTP_USER            = os.getenv('SMTP_USER', ADMIN_EMAIL)
+SMTP_PASSWORD        = os.getenv('SMTP_PASSWORD', '')
+STRIPE_SECRET_KEY    = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET= os.getenv('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_PRICE_ID      = os.getenv('STRIPE_PRICE_ID', '')
+APP_URL              = os.getenv('APP_URL', 'https://web-production-0036d.up.railway.app')
+
+if STRIPE_AVAILABLE and STRIPE_SECRET_KEY:
+    stripe.api_key = STRIPE_SECRET_KEY
 
 DB_FILE      = os.getenv('DB_PATH', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'smartlearn.db'))
 # Crée le dossier parent si nécessaire (ex: /data sur Railway)
@@ -55,13 +67,20 @@ def init_db():
                 last_play_date TEXT NOT NULL DEFAULT '',
                 achievements   TEXT NOT NULL DEFAULT '[]',
                 api_key        TEXT NOT NULL DEFAULT '',
-                daily_plays    TEXT NOT NULL DEFAULT '{}'
+                daily_plays    TEXT NOT NULL DEFAULT '{}',
+                credits        INTEGER NOT NULL DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS sessions (
                 token      TEXT PRIMARY KEY,
                 email      TEXT NOT NULL,
                 expires_at TEXT NOT NULL
             );
+        ''')
+        # Migration : ajoute la colonne credits si elle n'existe pas
+        cols = [r[1] for r in c.execute("PRAGMA table_info(users)").fetchall()]
+        if 'credits' not in cols:
+            c.execute("ALTER TABLE users ADD COLUMN credits INTEGER NOT NULL DEFAULT 0")
+        c.executescript('''
         ''')
         if ADMIN_EMAIL and ADMIN_PASSWORD:
             c.execute('''
@@ -125,6 +144,7 @@ def safe_user(row):
     d['lastPlayDate']   = d.pop('last_play_date', '')
     d['achievements']   = json.loads(d.get('achievements') or '[]')
     d['dailyPlays']     = json.loads(d.pop('daily_plays') or '{}')
+    d['credits']        = d.get('credits', 0)
     return d
 
 def get_user(email):
@@ -284,21 +304,18 @@ def claude():
     if not api_key:
         return jsonify({'error': "Aucune clé API configurée. Ajoute API_KEY dans le fichier .env"}), 400
 
-    # Limite quotidienne (comptes free)
+    # Vérification des crédits / plan
     email = get_email_from_token(token)
     if email:
         row = get_user(email)
         if row:
             u = dict(row)
-            if u['plan'] == 'free' and not u['is_admin']:
-                today = datetime.date.today().isoformat()
-                dp    = json.loads(u['daily_plays'] or '{}')
-                if dp.get('date') == today and dp.get('count', 0) >= 5:
-                    return jsonify({'error': 'Limite de 5 parties atteinte aujourd\'hui. Passe en Pro pour continuer !'}), 429
-                new_count = dp.get('count', 0) + 1 if dp.get('date') == today else 1
+            if not u['is_admin'] and u['plan'] != 'pro':
+                credits = u.get('credits', 0)
+                if credits <= 0:
+                    return jsonify({'error': 'Vous n\'avez plus de crédits. Achetez un pack pour continuer !', 'no_credits': True}), 429
                 with get_db() as c:
-                    c.execute('UPDATE users SET daily_plays = ? WHERE email = ?',
-                              (json.dumps({'date': today, 'count': new_count}), email))
+                    c.execute('UPDATE users SET credits = credits - 1 WHERE email = ?', (email,))
                     c.commit()
 
     payload = json.dumps({
@@ -384,6 +401,62 @@ def update_stats():
         ))
         c.commit()
     return jsonify({'success': True})
+
+
+# ─── STRIPE ──────────────────────────────────────────────────────────────────
+
+@app.route('/api/create-checkout', methods=['POST'])
+def create_checkout():
+    if not STRIPE_AVAILABLE or not STRIPE_SECRET_KEY:
+        return jsonify({'error': 'Stripe non configuré'}), 503
+    data  = request.get_json(silent=True) or {}
+    token = data.get('token', '')
+    email = get_email_from_token(token)
+    if not email:
+        return jsonify({'error': 'Non autorisé'}), 401
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{'price': STRIPE_PRICE_ID, 'quantity': 1}],
+            mode='payment',
+            success_url=f'{APP_URL}?payment=success',
+            cancel_url=f'{APP_URL}?payment=cancel',
+            customer_email=email,
+            metadata={'email': email}
+        )
+        return jsonify({'url': session.url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stripe-webhook', methods=['POST'])
+def stripe_webhook():
+    if not STRIPE_AVAILABLE:
+        return jsonify({'error': 'Stripe non disponible'}), 503
+    payload = request.get_data()
+    sig     = request.headers.get('Stripe-Signature', '')
+    try:
+        event = stripe.Webhook.construct_event(payload, sig, STRIPE_WEBHOOK_SECRET)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        email   = session.get('metadata', {}).get('email') or session.get('customer_email', '')
+        if email:
+            with get_db() as c:
+                c.execute('UPDATE users SET credits = credits + 3 WHERE email = ?', (email.lower(),))
+                c.commit()
+    return jsonify({'received': True})
+
+@app.route('/api/credits', methods=['POST'])
+def get_credits():
+    token = (request.get_json(silent=True) or {}).get('token', '')
+    email = get_email_from_token(token)
+    if not email:
+        return jsonify({'error': 'Non autorisé'}), 401
+    row = get_user(email)
+    if not row:
+        return jsonify({'error': 'Utilisateur introuvable'}), 404
+    return jsonify({'credits': dict(row).get('credits', 0), 'plan': dict(row)['plan']})
 
 
 # ─── DÉMARRAGE ───────────────────────────────────────────────────────────────
